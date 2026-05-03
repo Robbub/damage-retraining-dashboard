@@ -9,6 +9,7 @@ import AppLayout from './layouts/AppLayout.tsx'
 import Dashboard from './pages/Dashboard.tsx'
 import TrainingQueuePage from './pages/TrainingQueuePage.tsx'
 import TrainingJobs from './pages/TrainingJobs.tsx'
+import ModelVersionsPage from './pages/ModelVersions.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -20,6 +21,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/training" element={<TrainingQueuePage />} />
           <Route path="/jobs" element={<TrainingJobs />} />
+          <Route path="/model-version" element={<ModelVersionsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react"
 import { db } from "../firebase"
 import { collection, onSnapshot } from "firebase/firestore"
+import BatchDisagreementBadge from "../components/BatchDisagreementBadge"
+import TrainingJobLiveView from "../components/TrainingJobLiveView"
 
 type TrainingJob = {
     id: string
     status: "queued" | "running" | "completed" | "failed"
     datasetSize: number
+    disagreementScore?: number
     createdAt: any
     startedAt?: any
     completedAt?: any
@@ -37,6 +40,8 @@ export default function TrainingJobs() {
                 Training Jobs
             </h1>
 
+            <TrainingJobLiveView />
+
             <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-x-auto">
                 <table className="w-full text-left">
                     <thead className="border-b bg-gray-50">
@@ -47,6 +52,7 @@ export default function TrainingJobs() {
                             <th className="p-3">Started</th>
                             <th className="p-3">Completed</th>
                             <th className="p-3">Model Version</th>
+                            <th className="p-3">Dataset Quality</th>
                         </tr>
                     </thead>
 
@@ -87,6 +93,10 @@ export default function TrainingJobs() {
 
                                 <td className="p-3">
                                     {job.modelVersion ?? "-"}
+                                </td>
+
+                                <td className="p-3">
+                                    <BatchDisagreementBadge score={job.disagreementScore} />
                                 </td>
                             </tr>
                         ))}

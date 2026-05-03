@@ -3,7 +3,7 @@ import { db } from "../firebase"
 import { collection, onSnapshot } from "firebase/firestore"
 
 type ModelVersion = {
-    currentVersion: string
+    version: string
     lastUpdated: any
     status: string
 }
@@ -14,7 +14,17 @@ export default function ModelVersionCard() {
     useEffect(() => {
         const unsub = onSnapshot(collection(db, "model_versions"), (snapshot) => {
             if (!snapshot.empty) {
-                setModel(snapshot.docs[0].data() as ModelVersion)
+                const activeDoc = snapshot.docs.find(
+                    doc => doc.data().status === "active"
+                )
+
+                if (activeDoc) {
+                    setModel({
+                        version: activeDoc.data().version,
+                        lastUpdated: activeDoc.data().createdAt,
+                        status: activeDoc.data().status
+                    })
+                }
             }
         })
         return () => unsub()
@@ -23,7 +33,7 @@ export default function ModelVersionCard() {
     if (!model) {
         return (
             <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-4">
-                Loadign model info...
+                Loading model info...
             </div>
         )
     }
@@ -34,7 +44,7 @@ export default function ModelVersionCard() {
             </h2>
             
             <p className="text-lg font-semibold text-blue-600">
-                {model.currentVersion}
+                {model.version}
             </p>
 
             <p className="text-gray-600 mt-2">

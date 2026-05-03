@@ -49,6 +49,19 @@ export default function AppLayout() {
                         <ClipboardList size={18} />
                         Training Jobs
                     </NavLink>
+
+                    <NavLink
+                        to="/model-version"
+                        className={({ isActive }) =>
+                            `flex items-center gap-2 w-full px-3 py-2 rounded transition ${
+                            isActive
+                                ? "bg-orange-400 text-white shadow"
+                                : "text-slate-700 hover:bg-orange-100"
+                        }`}
+                    >
+                        <ClipboardList size={18} />
+                        Model Version
+                    </NavLink>
                 </nav>
             </div>
 

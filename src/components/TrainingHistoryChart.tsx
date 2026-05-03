@@ -9,6 +9,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts"
+import { useNavigate } from "react-router-dom"
 
 type TrainingJob = {
     datasetSize: number
@@ -20,6 +21,7 @@ type ChartData = {
 }
 
 export default function TrainingHistoryChart() {
+    const navigate = useNavigate()
     const [data, setData] = useState<ChartData[]>([])
 
     useEffect(() => {
@@ -40,7 +42,20 @@ export default function TrainingHistoryChart() {
             </h2>
             
             <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data}>
+                <BarChart 
+                    data={data}
+                    onClick={(data: any) => {
+                        if (!data?.activePayload) return
+                        const payload = data.activePayload[0].payload
+                        navigate("/jobs", {
+                            state: {
+                                filter: {
+                                    date: payload.date
+                                }
+                            }
+                        })
+                    }}
+                >
                     <XAxis dataKey="run" />
                     <YAxis />
                     <Tooltip />
