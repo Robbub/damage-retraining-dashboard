@@ -17,7 +17,7 @@ export default function ModelControlCard({
     return (
         <div className="h-full bg-white rounded-2xl shadow-md border border-slate-200 p-6">
             
-            <h2 className="text-xl font-bold mb-4">
+            <h2 className="text-x1 font-bold mb-3">
                 Change Model Version
             </h2>
 
