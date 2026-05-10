@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { db } from "../firebase"
-import { collection, onSnapshot } from "firebase/firestore"
+import { collection, onSnapshot, updateDoc, doc } from "firebase/firestore"
 import { type Correction } from "./common/interface"
 import ModelVersionCard from "../components/ModelVersionCard"
 import TrainingAnalyticsCards from "../components/TrainingAnalyticsCards"
@@ -9,6 +9,8 @@ import ClassDistributionChart from "../components/ClassDistributionChart"
 import { useNavigate } from "react-router-dom"
 import { Clock3, CheckCircle2, Archive } from "lucide-react"
 import TrainingJobLiveView from "../components/TrainingJobLiveView"
+import ModelControlCard from "../components/ModelControlCard"
+import { useAvailableModels } from "../hooks/useAvailableModels"
 
 const THRESHOLD = 50
 
@@ -23,7 +25,7 @@ export default function Dashboard() {
         pendingTrainingCount >= THRESHOLD
 
     useEffect(() => {
-        const unsub = onSnapshot(collection(db, "corrections"), (snapshot) => {
+        const unsub = onSnapshot(collection(db, "correctImagesByEngineer"), (snapshot) => {
             const data = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
@@ -34,24 +36,24 @@ export default function Dashboard() {
 
         return () => unsub()
     }, [])
-    const pending = corrections.filter(c => c.status === "pending").length
-    const approved = corrections.filter(c => c.status === "approved").length
-    const archived = corrections.filter(c => c.status === "archived").length
+    const pending = corrections.filter(c => c.statusMessage === "pending").length
+    const approved = corrections.filter(c => c.statusMessage === "approved").length
+    const archived = corrections.filter(c => c.statusMessage === "archived").length
     
     const shapeCounts = corrections.reduce((acc, curr) => {
-        const key = curr.corrected?.shape ?? "unknown"
+        const key = curr.correctedPrediction?.shape ?? "unknown"
         acc[key] = (acc[key] || 0) + 1
         return acc
     }, {} as Record<string, number>)
 
     const directionCounts = corrections.reduce((acc, curr) => {
-        const key = curr.corrected?.direction ?? "unknown"
+        const key = curr.correctedPrediction?.type ?? "unknown"
         acc[key] = (acc[key] || 0) + 1
         return acc
     }, {} as Record<string, number>)
 
     const severityCounts = corrections.reduce((acc, curr) => {
-        const key = curr.corrected?.severity ?? "unknown"
+        const key = curr.correctedPrediction?.severity ?? "unknown"
         acc[key] = (acc[key] || 0) + 1
         return acc
     }, {} as Record<string, number>)
@@ -65,9 +67,35 @@ export default function Dashboard() {
     const shapeData = toChartData(shapeCounts)
     const directionData = toChartData(directionCounts)
     const severityData = toChartData(severityCounts)
+    
+    const availableModels = useAvailableModels()
+    const [activeModel, setActiveModel] = useState("")
+    const modelDocRef = doc(db, "model_control", "active")
+
+    useEffect(() => {
+        const unsub = onSnapshot(modelDocRef, (snap) => {
+            const data = snap.data()
+            if (!data) return
+            setActiveModel(data.activeModelVersion ?? "")
+        })
+        return () => unsub()
+    }, [])
+    
+    const triggerBuild = async () => {
+        await updateDoc(modelDocRef, {
+            pendingBuild: true
+        })
+    }
+
+    const onModelChange = async (newModel: string) => {
+    await updateDoc(modelDocRef, {
+        activeModelVersion: newModel,
+        pendingBuild: true
+    })
+}
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-6">
+        <div className="min-h-screen rounded-2xl shadow border bg-gradient-to-br from-slate-100 to-blue-50 p-6">
             <div className="space-y-6">
                 <h1 className="text-3xl font-bold text-slate-800 mb-2">
                     Crack Classification Dashboard
@@ -76,8 +104,19 @@ export default function Dashboard() {
                     Monitor corrections, retraining readiness, and model versions
                 </p>
 
-                <ModelVersionCard />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
 
+                    <ModelVersionCard />
+
+                    <ModelControlCard
+                        activeModel={activeModel}
+                        availableModels={availableModels}
+                        onModelChange={onModelChange}
+                        onTriggerBuild={triggerBuild}
+                    />
+
+                </div>
+                
                 <div className="bg-white p-4 rounded shadow-md border border-slate-200">
                     <h2 className="text-lg font-semibold mb-4">
                         Training Readiness

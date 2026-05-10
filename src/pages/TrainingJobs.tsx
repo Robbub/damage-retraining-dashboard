@@ -35,7 +35,7 @@ export default function TrainingJobs() {
     }, [])
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-6">
+        <div className="min-h-screen rounded-2xl shadow border bg-gradient-to-br from-slate-100 to-blue-50 p-6">
             <h1 className="text-2x1 font-bold mb-6">
                 Training Jobs
             </h1>

@@ -38,7 +38,7 @@ export default function ModelVersionCard() {
         )
     }
     return (
-        <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6 mb-6">
+        <div className="h-full bg-white rounded-2xl shadow-md border border-slate-200 p-6 mb-6">
             <h2 className="text-x1 font-bold mb-3">
                 Current Model Version
             </h2>

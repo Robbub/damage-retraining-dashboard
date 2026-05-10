@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react"
-import { collection, onSnapshot, getDocs, updateDoc } from "firebase/firestore"
+import { collection, onSnapshot, getDocs, updateDoc, doc } from "firebase/firestore"
 import { db } from "../firebase"
+import ModelVersionCard from "../components/ModelVersionCard"
+import ModelControlCard from "../components/ModelControlCard"
 
 type ModelVersion = {
     version: string
@@ -53,66 +55,99 @@ export default function ModelVersionsPage() {
         })
         return () => unsub()
     }, [])
+
+    const [activeModel, setActiveModel] = useState("")
+    const modelDocRef = doc(db, "model_control", "active")
+    const availableModels = versions
+        .filter(v => v.status !== "archived")
+        .map(v => v.version)
+
+    const onModelChange = async (newModel: string) => {
+        await updateDoc(modelDocRef, {
+            activeModelVersion: newModel,
+            pendingBuild: true
+        })
+    }
+
+    const triggerBuild = async () => {
+        await updateDoc(modelDocRef, {
+            pendingBuild: true
+        })
+    }
     return (
-        <div className="bg-white rounded-2xl shadow border overflow-x-auto">
-            <table className="w-full text-left">
-                <thead className="bg-gray-50 border-b">
-                    <tr>
-                        <th className="p-3">Version</th>
-                        <th className="p-3">Status</th>
-                        <th className="p-3">Dataset</th>
-                        <th className="p-3">Disagreement</th>
-                        <th className="p-3">Created</th>
-                        <th className="p-3">Actions</th>
-                    </tr>
-                </thead>
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                <ModelVersionCard />
 
-                <tbody>
-                    {versions.map(v => (
-                        <tr key={v.id} className="border-b">
-                            <td className="p-3 font-semibold">
-                                {v.version}
-                                {v.status === "active" && (
-                                    <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                                        LIVE
-                                    </span>
-                                )}
-                            </td>
-                            
-                            <td className="p-3">
-                                <span className={
-                                    v.status === "active"
-                                        ? "text-green-600 font-bold"
-                                        : "text-gray-500"
-                                }>
-                                    {v.status}
-                                </span>
-                            </td>
+                <ModelControlCard
+                    activeModel={activeModel}
+                    availableModels={availableModels}
+                    onModelChange={onModelChange}
+                    onTriggerBuild={triggerBuild}
+                />
+            </div>
 
-                            <td className="p-3">{v.datasetSize}</td>
-                            <td className="p-3">{v.disagreementScore ?? "-"}</td>
-
-                            <td className="p-3">
-                                {v.createdAt?.toDate?.().toLocaleDateString?.() ?? "-"}
-                            </td>
-
-                            <td className="p-3">
-                                {v.status !== "active" && (
-                                    <button
-                                        onClick={() => {
-                                            if (!confirm("Set this version as active?")) return
-                                            setActiveVersion(v.id)
-                                        }}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                                    >
-                                        Set Active
-                                    </button>
-                                )}
-                            </td>
+            <div className="bg-white rounded-2xl shadow border overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-50 border-b">
+                        <tr>
+                            <th className="p-3">Version</th>
+                            <th className="p-3">Status</th>
+                            <th className="p-3">Dataset</th>
+                            <th className="p-3">Disagreement</th>
+                            <th className="p-3">Created</th>
+                            <th className="p-3">Actions</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+
+                    <tbody>
+                        {versions.map(v => (
+                            <tr key={v.id} className="border-b">
+                                <td className="p-3 font-semibold">
+                                    {v.version}
+                                    {v.status === "active" && (
+                                        <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                            LIVE
+                                        </span>
+                                    )}
+                                </td>
+                                
+                                <td className="p-3">
+                                    <span className={
+                                        v.status === "active"
+                                            ? "text-green-600 font-bold"
+                                            : "text-gray-500"
+                                    }>
+                                        {v.status}
+                                    </span>
+                                </td>
+
+                                <td className="p-3">{v.datasetSize}</td>
+                                <td className="p-3">{v.disagreementScore ?? "-"}</td>
+
+                                <td className="p-3">
+                                    {v.createdAt?.toDate?.().toLocaleDateString?.() ?? "-"}
+                                </td>
+
+                                <td className="p-3">
+                                    {v.status !== "active" && (
+                                        <button
+                                            onClick={() => {
+                                                if (!confirm("Set this version as active?")) return
+                                                setActiveVersion(v.id)
+                                            }}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                                        >
+                                            Set Active
+                                        </button>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            
         </div>
     )
 }

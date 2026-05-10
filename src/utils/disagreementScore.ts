@@ -1,21 +1,21 @@
 import { type Correction } from "../pages/common/interface"
 
 export function getDisagreementScore(item: Correction): number {
-    if (!item.predicted || !item.corrected) return 0
+    if (!item.prediction || !item.correctedPrediction) return 0
 
     let mismatches = 0
     let total = 0
 
-    const fields: (keyof Correction["predicted"])[] = [
+    const fields: (keyof Correction["prediction"])[] = [
         "shape",
-        "direction",
+        "type",
         "severity"
     ]
 
     for (const  field of fields) {
         total++
 
-        if (item.predicted[field] !== item.corrected[field]) {
+        if (item.prediction[field] !== item.correctedPrediction[field]) {
             mismatches++
         }
     }

@@ -20,6 +20,8 @@ import type { DatasetSnapshot } from "../types/training"
 import { updateJobStatus } from "../types/training"
 import { runTraining } from "../utils/trainingRunner"
 import TrainingJobLiveView from "../components/TrainingJobLiveView"
+// import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3"
+// import { fromCognitoIdentityPool } from "@aws-sdk/credential-providers"
 
 export default function TrainingQueuePage() {
     const [batch, setBatch] = useState<Correction[]>([])
@@ -33,6 +35,7 @@ export default function TrainingQueuePage() {
         severity: queryParams.get("severity")
     }), [location.search])
     const navigate = useNavigate()
+    // const [resolvedImages, setResolvedImages] = useState<Record<string, string>>({});
 
     const PAGE_SIZE = 20
     const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null)
@@ -41,9 +44,9 @@ export default function TrainingQueuePage() {
 
     const filteredData = useMemo(() => {
         return batch.filter((item) => {
-            if (filter.shape && item.corrected?.shape !== filter.shape) return false
-            if (filter.direction && item.corrected?.direction !== filter.direction) return false
-            if (filter.severity && item.corrected?.severity !== filter.severity) return false
+            if (filter.shape && item.correctedPrediction?.shape !== filter.shape) return false
+            if (filter.direction && item.correctedPrediction?.type !== filter.direction) return false
+            if (filter.severity && item.correctedPrediction?.severity !== filter.severity) return false
             return true
         })
     }, [batch, filter])
@@ -96,11 +99,18 @@ export default function TrainingQueuePage() {
                 startedAt: new Date()
             })
 
-            await runTraining({
-                jobId: jobRef.id,
-                datasetSize: trainingData.length,
-                trainingData: trainingData,
-                disagreementScore: batchScore
+            await fetch("http://localhost:5000/start-training",{
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    jobId: jobRef.id,
+                    trainingData,
+                    datasetSize: trainingData.length,
+                    disagreementScore: batchScore,
+                    datasetSnapshot
+                })
             })
         } catch (error) {
             console.error("Retraining failed", error)
@@ -113,7 +123,7 @@ export default function TrainingQueuePage() {
         const q = buildCorrectionsQuery({
             usedInTraining: false,
             pageSize: PAGE_SIZE,
-            orderByField: "createdAt",
+            orderByField: "timestamp",
             orderDirection: "desc"
     })
 
@@ -136,7 +146,7 @@ export default function TrainingQueuePage() {
             usedInTraining: false,
             pageSize: PAGE_SIZE,
             cursor: lastDoc,
-            orderByField: "createdAt",
+            orderByField: "timestamp",
             orderDirection: "desc"
     })
 
@@ -151,8 +161,46 @@ export default function TrainingQueuePage() {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1] ?? null)
         setHasMore(snapshot.docs.length === PAGE_SIZE)
     }
+
+    // const s3Client = new S3Client({
+    //     region: "ap-southeast-2",
+    //     credentials: fromCognitoIdentityPool({
+    //         clientConfig: { region: "ap-southeast-2" },
+    //         identityPoolId: "ap-southeast-2:e70f96d9-6860-4f80-9bf8-082d2661b665",
+    //     }),
+    // });
+
+    // async function resolveImage(key: string) {
+    //     const command = new GetObjectCommand({
+    //         Bucket: "my-angular-test-bucket-12345",
+    //         Key: key
+    //     });
+    //     const res = await s3Client.send(command);
+    //     const blob = await new Response(res.Body as any).blob();
+    //     return URL.createObjectURL(blob);
+    // }
+
+    // useEffect(() => {
+    //     if (!batch.length) return;
+
+    //     const loadImages = async () => {
+    //         const results: Record<string, string> = {};
+
+    //         await Promise.all(
+    //             batch.map(async (item) => {
+    //                 if (!item.storagePath) return;
+    //                 if (resolvedImages[item.id]) return;
+
+    //                 results[item.id] = await resolveImage(item.storagePath);
+    //             })
+    //         );
+    //         setResolvedImages(results);
+    //     };
+    //     loadImages();
+    // }, [batch]);
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-6">
+        <div className="min-h-screen rounded-2xl shadow border bg-gradient-to-br from-slate-100 to-blue-50 p-6">
             <h1 className="text-2x1 font-bold mb-6">
                 Training Queue
             </h1>
@@ -232,7 +280,7 @@ export default function TrainingQueuePage() {
                             className="bg-white rounded-xl shadow border border-slate-200 p-4 hover:shadow-md transition"
                         >
                             <img
-                                src={item.imageUrl}
+                                src={item.storageUrl || item.originalS3Url}
                                 className="w-full h-40 object-cover rounded-lg mb-3"
                             />
                                 <div className="text-sm space-y-1">
@@ -240,18 +288,18 @@ export default function TrainingQueuePage() {
                                         <span className="font-semibold">
                                             Predicted:
                                         </span>{" "}
-                                        {item.predicted?.shape} / {item.predicted?.direction} / {item.predicted?.severity}
+                                        {item.prediction?.shape} / {item.prediction?.type} / {item.prediction?.severity}
                                     </p>
 
                                     <p>
                                         <span className="font-semibold">
                                             Corrected:
                                         </span>{" "}
-                                        {item.corrected?.shape} / {item.corrected?.direction} / {item.corrected?.severity}
+                                        {item.correctedPrediction?.shape} / {item.correctedPrediction?.type} / {item.correctedPrediction?.severity}
                                     </p>
 
                                     <p className="text-gray-500">
-                                        Status: {item.status}
+                                        Status: {item.statusMessage}
                                     </p>
 
                                     <DisagreementBadge item={item} />
@@ -267,8 +315,8 @@ export default function TrainingQueuePage() {
                                 </button>
                                 {expandedId === item.id && (
                                     <div className="mt-3 text-sm bg-slate-500 p-3 rounded-lg">
-                                        <p><b>Predicted:</b> {JSON.stringify(item.predicted)}</p>
-                                        <p><b>Corrected:</b> {JSON.stringify(item.corrected)}</p>
+                                        <p><b>Predicted:</b> {JSON.stringify(item.prediction)}</p>
+                                        <p><b>Corrected:</b> {JSON.stringify(item.correctedPrediction)}</p>
                                     </div>
                                 )}
                         </div>

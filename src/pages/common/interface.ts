@@ -1,16 +1,17 @@
 export interface Correction {
   id: string
-  imageUrl: string
-  status: "pending" | "approved" | "archived"
-  predicted: {
-    shape?: "line" | "curve" | "web"
-    direction?: "vertical" | "horizontal" | "diagonal"
-    severity?: "minor" | "moderate" | "severe"
+  originalS3Url?: string
+  storageUrl?: string
+  statusMessage: "pending" | "approved" | "archived"
+  prediction: {
+    shape?: string
+    type?: string
+    severity?: string
   }
-  corrected: {
-    shape?: "line" | "curve" | "web"
-    direction?: "vertical" | "horizontal" | "diagonal"
-    severity?: "minor" | "moderate" | "severe"
+  correctedPrediction: {
+    shape?: string
+    type?: string
+    severity?: string
   }
   usedInTraining: boolean
 }

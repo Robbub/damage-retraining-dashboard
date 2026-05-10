@@ -4,8 +4,8 @@ import { NavLink } from "react-router-dom"
 
 export default function AppLayout() {
     return (
-        <div className="flex min-h-screen bg-orange-50">
-            <div className="w-64 bg-white/80 backdrop-blur-sm border-r border-orange-100 p-4">
+        <div className="flex min-h-screen bg-orange-300">
+            <div className="w-64 bg-white/90 backdrop-blur-sm p-4 pr-0">
                 <h2 className="text-xl font-bold text-orange-700 tracking-wide mb-6">
                     DAMAGE Retraining Dashboard
                 </h2>
@@ -14,10 +14,10 @@ export default function AppLayout() {
                     <NavLink
                         to="/dashboard"
                         className={({ isActive }) =>
-                            `flex items-center gap-2 w-full px-3 py-2 rounded transition ${
+                            `flex items-center gap-2 w-full px-3 py-3 transition ${
                             isActive
-                                ? "bg-orange-400 text-white shadow"
-                                : "text-slate-700 hover:bg-orange-100"
+                                ? "bg-orange-300 text-white rounded-l-xl"
+                                : "text-slate-700 hover:bg-blue-100"
                         }`}
                     >
                         <LayoutDashboard size={18} />
@@ -27,10 +27,10 @@ export default function AppLayout() {
                     <NavLink
                         to="/training"
                         className={({ isActive }) =>
-                            `flex items-center gap-2 w-full px-3 py-2 rounded transition ${
+                            `flex items-center gap-2 w-full px-3 py-3 transition ${
                             isActive
-                                ? "bg-orange-400 text-white shadow"
-                                : "text-slate-700 hover:bg-orange-100"
+                                ? "bg-orange-300 text-white rounded-l-xl"
+                                : "text-slate-700 hover:bg-blue-100"
                         }`}
                     >
                         <Database size={18} />
@@ -40,10 +40,10 @@ export default function AppLayout() {
                     <NavLink
                         to="/jobs"
                         className={({ isActive }) =>
-                            `flex items-center gap-2 w-full px-3 py-2 rounded transition ${
+                            `flex items-center gap-2 w-full px-3 py-3 transition ${
                             isActive
-                                ? "bg-orange-400 text-white shadow"
-                                : "text-slate-700 hover:bg-orange-100"
+                                ? "bg-orange-300 text-white rounded-l-xl"
+                                : "text-slate-700 hover:bg-blue-100"
                         }`}
                     >
                         <ClipboardList size={18} />
@@ -53,10 +53,10 @@ export default function AppLayout() {
                     <NavLink
                         to="/model-version"
                         className={({ isActive }) =>
-                            `flex items-center gap-2 w-full px-3 py-2 rounded transition ${
+                            `flex items-center gap-2 w-full px-3 py-3 transition ${
                             isActive
-                                ? "bg-orange-400 text-white shadow"
-                                : "text-slate-700 hover:bg-orange-100"
+                                ? "bg-orange-300 text-white rounded-l-xl"
+                                : "text-slate-700 hover:bg-blue-100"
                         }`}
                     >
                         <ClipboardList size={18} />
